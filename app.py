@@ -1,11 +1,17 @@
 from flask import Flask, request, jsonify
 import re
 import spacy
+import subprocess
 
 app = Flask(__name__)
 
-# Load SpaCy model
-nlp = spacy.load("en_core_web_sm")
+# Load SpaCy model (with auto-download if missing)
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
+    nlp = spacy.load("en_core_web_sm")
+
 
 def extract_any_category(text):
     # grab first number
@@ -35,7 +41,7 @@ def extract_any_category(text):
 
     return cat, amount
 
-# Flask route
+
 @app.route('/extract', methods=['POST'])
 def extract():
     data = request.json
@@ -53,6 +59,7 @@ def extract():
         results[cat] = results.get(cat, 0) + amt
 
     return jsonify(results)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
